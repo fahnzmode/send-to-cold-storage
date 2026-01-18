@@ -4,7 +4,7 @@ A devcontainer template for running Claude Code in an isolated environment, suit
 
 ## Features
 
-- Runs as root for autonomous/sandboxed operations
+- Runs as `vscode` user (enables `--dangerously-skip-permissions`)
 - Node.js LTS pre-installed
 - Claude Code CLI pre-installed
 - Planning files for structured task management (via planning-with-files skill)
@@ -60,8 +60,8 @@ This template includes starter planning files from the planning-with-files skill
 
 ## Container Details
 
-- **Base image:** mcr.microsoft.com/devcontainers/base:ubuntu
-- **User:** root (for autonomous operations)
+- **Base image:** mcr.microsoft.com/devcontainers/base:ubuntu (via Dockerfile)
+- **User:** vscode (enables autonomous mode)
 - **Memory:** 4GB limit
 - **CPUs:** 2
 - **PIDs:** 256 limit

@@ -1,20 +1,37 @@
 {
-  "name": "claude-agent-sandbox",
+  "name": "Send to Cold Storage",
   "build": {
     "dockerfile": "Dockerfile"
   },
+  
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts"
     },
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/powershell:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
   },
-
+  
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && git config --global init.defaultBranch main && git init || true && restic version",
+  
+  "containerEnv": {
+    "AWS_REGION": "us-east-1"
+  },
+  
+  "remoteUser": "vscode",
+  
   "runArgs": [
     "--memory=4g",
     "--cpus=2",
     "--pids-limit=256",
-    "--read-only=false",
+    "--security-opt=no-new-privileges",
     "--cap-drop=ALL",
     "--cap-add=CHOWN",
     "--cap-add=SETUID",
@@ -22,24 +39,23 @@
     "--cap-add=KILL",
     "--cap-add=SYS_PTRACE",
     "--cap-add=NET_BIND_SERVICE",
-    "--cap-add=DAC_OVERRIDE",
-    "--security-opt=no-new-privileges:true"
+    "--cap-add=DAC_OVERRIDE"
   ],
-
+  
   "customizations": {
     "vscode": {
       "extensions": [
-        "anthropic.claude-code"
+        "ms-vscode.powershell",
+        "editorconfig.editorconfig",
+        "amazonwebservices.aws-toolkit-vscode"
       ],
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "powershell.integratedConsole.showOnStartup": false,
+        "terminal.integrated.defaultProfile.linux": "pwsh",
+        "files.eol": "\n",
+        "editor.formatOnSave": true,
+        "powershell.codeFormatting.preset": "OTBS"
       }
     }
-  },
-
-  "postCreateCommand": "chown -R root:root /usr/local/share/nvm && npm install -g @anthropic-ai/claude-code && git config --global init.defaultBranch main && git init || true",
-
-  "remoteUser": "root",
-
-  "shutdownAction": "stopContainer"
+  }
 }
