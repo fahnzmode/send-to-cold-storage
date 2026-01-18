@@ -1,0 +1,45 @@
+{
+  "name": "claude-agent-sandbox",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "runArgs": [
+    "--memory=4g",
+    "--cpus=2",
+    "--pids-limit=256",
+    "--read-only=false",
+    "--cap-drop=ALL",
+    "--cap-add=CHOWN",
+    "--cap-add=SETUID",
+    "--cap-add=SETGID",
+    "--cap-add=KILL",
+    "--cap-add=SYS_PTRACE",
+    "--cap-add=NET_BIND_SERVICE",
+    "--cap-add=DAC_OVERRIDE",
+    "--security-opt=no-new-privileges:true"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "postCreateCommand": "chown -R root:root /usr/local/share/nvm && npm install -g @anthropic-ai/claude-code && git config --global init.defaultBranch main && git init || true",
+
+  "remoteUser": "root",
+
+  "shutdownAction": "stopContainer"
+}

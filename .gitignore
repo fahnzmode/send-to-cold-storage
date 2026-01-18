@@ -1,0 +1,14 @@
+# Claude local settings (user-specific permissions)
+.claude/settings.local.json
+
+# Node
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
