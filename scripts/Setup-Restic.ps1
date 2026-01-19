@@ -143,9 +143,43 @@ function Install-ResticWindows {
         winget install restic.restic --accept-package-agreements --accept-source-agreements
         Write-Success "restic installed successfully"
 
-        # Refresh PATH
+        # Refresh PATH from registry
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
                     [System.Environment]::GetEnvironmentVariable("Path", "User")
+
+        # Verify restic is now accessible
+        $resticCmd = Get-Command restic -ErrorAction SilentlyContinue
+        if (-not $resticCmd) {
+            # Search common winget installation locations
+            $searchPaths = @(
+                "$env:LOCALAPPDATA\Microsoft\WinGet\Packages",
+                "$env:LOCALAPPDATA\Microsoft\WinGet\Links",
+                "$env:ProgramFiles\restic",
+                "${env:ProgramFiles(x86)}\restic"
+            )
+
+            $resticExe = $null
+            foreach ($searchPath in $searchPaths) {
+                if (Test-Path $searchPath) {
+                    $found = Get-ChildItem -Path $searchPath -Recurse -Filter "restic.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+                    if ($found) {
+                        $resticExe = $found.FullName
+                        break
+                    }
+                }
+            }
+
+            if ($resticExe) {
+                $resticDir = Split-Path $resticExe -Parent
+                Write-Host "Found restic at: $resticExe"
+                Write-Host "Adding to PATH for this session..."
+                $env:Path = "$resticDir;$env:Path"
+            } else {
+                Write-Warning "restic was installed but not found in PATH."
+                Write-Warning "Please close this PowerShell window and open a new one, then run Setup again."
+                throw "restic not in PATH after installation"
+            }
+        }
     } catch {
         Write-Error "Failed to install restic via winget: $_"
         throw
