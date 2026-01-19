@@ -93,15 +93,15 @@ function Get-PlatformDefaults {
         }
     } else {
         # Linux/macOS
-        $home = $env:HOME
+        $homeDir = $env:HOME
         @{
             IsWindows = $false
-            ConfigDir = Join-Path $home ".cold-storage"
-            ConfigPath = Join-Path $home ".cold-storage/config.json"
-            PasswordFile = Join-Path $home ".cold-storage/.restic-password"
+            ConfigDir = Join-Path $homeDir ".cold-storage"
+            ConfigPath = Join-Path $homeDir ".cold-storage/config.json"
+            PasswordFile = Join-Path $homeDir ".cold-storage/.restic-password"
             StagingRoot = "/tmp/cold-storage-staging"
-            LogDirectory = Join-Path $home ".cold-storage/logs"
-            AwsCredentialsPath = Join-Path $home ".aws/credentials"
+            LogDirectory = Join-Path $homeDir ".cold-storage/logs"
+            AwsCredentialsPath = Join-Path $homeDir ".aws/credentials"
         }
     }
 }
@@ -157,14 +157,14 @@ function Test-AwsCredentials {
     .SYNOPSIS
         Check if AWS credentials are configured for the specified profile.
     #>
-    param([string]$Profile = "cold-storage")
+    param([string]$AwsProfileName = "cold-storage")
 
     try {
-        $env:AWS_PROFILE = $Profile
+        $env:AWS_PROFILE = $AwsProfileName
         $identity = aws sts get-caller-identity 2>&1
         if ($LASTEXITCODE -eq 0) {
             $parsed = $identity | ConvertFrom-Json
-            Write-Success "AWS credentials valid for profile '$Profile'"
+            Write-Success "AWS credentials valid for profile '$AwsProfileName'"
             Write-Host "  Account: $($parsed.Account)"
             Write-Host "  User: $($parsed.Arn)"
             return $true
@@ -180,9 +180,9 @@ function Initialize-AwsCredentials {
     .SYNOPSIS
         Prompt user to configure AWS credentials.
     #>
-    param([string]$Profile = "cold-storage")
+    param([string]$AwsProfileName = "cold-storage")
 
-    Write-Step "Configuring AWS credentials for profile '$Profile'..."
+    Write-Step "Configuring AWS credentials for profile '$AwsProfileName'..."
     Write-Host "You'll need your AWS Access Key ID and Secret Access Key."
     Write-Host "These should be for a user with S3 access to your cold storage bucket."
     Write-Host ""
@@ -206,15 +206,15 @@ function Initialize-AwsCredentials {
         $env:AWS_SECRET_ACCESS_KEY = $secretKeyPlain
         $env:AWS_DEFAULT_REGION = $region
 
-        aws configure set aws_access_key_id $accessKey --profile $Profile
-        aws configure set aws_secret_access_key $secretKeyPlain --profile $Profile
-        aws configure set region $region --profile $Profile
+        aws configure set aws_access_key_id $accessKey --profile $AwsProfileName
+        aws configure set aws_secret_access_key $secretKeyPlain --profile $AwsProfileName
+        aws configure set region $region --profile $AwsProfileName
 
         # Clear sensitive data
         $secretKeyPlain = $null
         Remove-Variable secretKeyPlain -ErrorAction SilentlyContinue
 
-        Write-Success "AWS credentials configured for profile '$Profile'"
+        Write-Success "AWS credentials configured for profile '$AwsProfileName'"
         return $true
     } catch {
         Write-Error "Failed to configure AWS credentials: $_"
@@ -231,7 +231,7 @@ function New-ResticPassword {
     .SYNOPSIS
         Generate or prompt for restic repository password and save securely.
     #>
-    param([string]$PasswordFile)
+    param([string]$ResticKeyFile)
 
     Write-Step "Setting up restic repository password..."
     Write-Host "This password encrypts your backups. Store it safely - you cannot recover data without it!"
@@ -257,30 +257,30 @@ function New-ResticPassword {
     }
 
     # Save to password file
-    $passwordDir = Split-Path $PasswordFile -Parent
+    $passwordDir = Split-Path $ResticKeyFile -Parent
     if (-not (Test-Path $passwordDir)) {
         New-Item -ItemType Directory -Path $passwordDir -Force | Out-Null
     }
 
-    $password | Out-File -FilePath $PasswordFile -Encoding UTF8 -NoNewline
+    $password | Out-File -FilePath $ResticKeyFile -Encoding UTF8 -NoNewline
 
     # Set restrictive permissions
     $defaults = Get-PlatformDefaults
     if ($defaults.IsWindows) {
         # Windows: Remove inheritance and set owner-only access
-        $acl = Get-Acl $PasswordFile
+        $acl = Get-Acl $ResticKeyFile
         $acl.SetAccessRuleProtection($true, $false)
         $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
             $env:USERNAME, "FullControl", "Allow"
         )
         $acl.SetAccessRule($rule)
-        Set-Acl $PasswordFile $acl
+        Set-Acl $ResticKeyFile $acl
     } else {
         # Linux/macOS: chmod 600
-        chmod 600 $PasswordFile
+        chmod 600 $ResticKeyFile
     }
 
-    Write-Success "Password saved to: $PasswordFile"
+    Write-Success "Password saved to: $ResticKeyFile"
     return $password
 }
 
@@ -291,7 +291,7 @@ function Initialize-ResticRepository {
     #>
     param(
         [string]$Repository,
-        [string]$PasswordFile,
+        [string]$ResticKeyFile,
         [string]$AwsProfile
     )
 
@@ -300,10 +300,10 @@ function Initialize-ResticRepository {
 
     $env:AWS_PROFILE = $AwsProfile
     $env:RESTIC_REPOSITORY = $Repository
-    $env:RESTIC_PASSWORD_FILE = $PasswordFile
+    $env:RESTIC_PASSWORD_FILE = $ResticKeyFile
 
     # Check if repository already exists
-    $checkResult = restic snapshots 2>&1
+    $null = restic snapshots 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Repository already initialized"
         return $true
@@ -331,7 +331,7 @@ function Test-ResticConnection {
     #>
     param(
         [string]$Repository,
-        [string]$PasswordFile,
+        [string]$ResticKeyFile,
         [string]$AwsProfile
     )
 
@@ -339,7 +339,7 @@ function Test-ResticConnection {
 
     $env:AWS_PROFILE = $AwsProfile
     $env:RESTIC_REPOSITORY = $Repository
-    $env:RESTIC_PASSWORD_FILE = $PasswordFile
+    $env:RESTIC_PASSWORD_FILE = $ResticKeyFile
 
     try {
         $result = restic snapshots --json 2>&1
@@ -447,9 +447,9 @@ function Main {
     # Step 2: Check/configure AWS credentials
     Write-Step "Checking AWS credentials..."
     $awsProfile = "cold-storage"
-    if (-not (Test-AwsCredentials -Profile $awsProfile)) {
+    if (-not (Test-AwsCredentials -AwsProfileName $awsProfile)) {
         Write-Warning "AWS credentials not configured for profile '$awsProfile'"
-        if (-not (Initialize-AwsCredentials -Profile $awsProfile)) {
+        if (-not (Initialize-AwsCredentials -AwsProfileName $awsProfile)) {
             throw "Failed to configure AWS credentials"
         }
     }
