@@ -479,21 +479,21 @@ function Main {
         Write-Host ""
         $useExisting = Read-Host "Password file already exists at $passwordFile. Use it? [Y/n]"
         if ($useExisting -eq "n" -or $useExisting -eq "N") {
-            $null = New-ResticPassword -PasswordFile $passwordFile
+            $null = New-ResticPassword -ResticKeyFile $passwordFile
         } else {
             Write-Success "Using existing password file"
         }
     } else {
-        $null = New-ResticPassword -PasswordFile $passwordFile
+        $null = New-ResticPassword -ResticKeyFile $passwordFile
     }
 
     # Step 5: Initialize restic repository
-    if (-not (Initialize-ResticRepository -Repository $resticRepo -PasswordFile $passwordFile -AwsProfile $awsProfile)) {
+    if (-not (Initialize-ResticRepository -Repository $resticRepo -ResticKeyFile $passwordFile -AwsProfile $awsProfile)) {
         throw "Failed to initialize restic repository"
     }
 
     # Step 6: Test connection
-    if (-not (Test-ResticConnection -Repository $resticRepo -PasswordFile $passwordFile -AwsProfile $awsProfile)) {
+    if (-not (Test-ResticConnection -Repository $resticRepo -ResticKeyFile $passwordFile -AwsProfile $awsProfile)) {
         throw "Failed to connect to restic repository"
     }
 
