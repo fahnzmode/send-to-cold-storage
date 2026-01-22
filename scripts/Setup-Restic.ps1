@@ -223,10 +223,13 @@ function Initialize-AwsCredentials {
 
     $accessKey = Read-Host "AWS Access Key ID"
     $secretKey = Read-Host "AWS Secret Access Key" -AsSecureString
-    $region = Read-Host "AWS Region (default: us-east-2)"
 
-    if ([string]::IsNullOrWhiteSpace($region)) {
-        $region = "us-east-2"
+    $region = ""
+    while ([string]::IsNullOrWhiteSpace($region)) {
+        $region = Read-Host "AWS Region (e.g., us-east-1, us-west-2, eu-west-1)"
+        if ([string]::IsNullOrWhiteSpace($region)) {
+            Write-Host "Region is required." -ForegroundColor Yellow
+        }
     }
 
     # Convert SecureString to plain text for aws configure
@@ -490,17 +493,21 @@ function Main {
 
     # Step 3: Get S3 bucket configuration
     Write-Step "Configuring S3 bucket..."
-    $defaultBucket = "fahnzmode-cold-storage-archive"
-    $defaultRegion = "us-east-2"
 
-    $bucket = Read-Host "S3 bucket name (default: $defaultBucket)"
-    if ([string]::IsNullOrWhiteSpace($bucket)) {
-        $bucket = $defaultBucket
+    $bucket = ""
+    while ([string]::IsNullOrWhiteSpace($bucket)) {
+        $bucket = Read-Host "S3 bucket name"
+        if ([string]::IsNullOrWhiteSpace($bucket)) {
+            Write-Host "Bucket name is required." -ForegroundColor Yellow
+        }
     }
 
-    $region = Read-Host "AWS region (default: $defaultRegion)"
-    if ([string]::IsNullOrWhiteSpace($region)) {
-        $region = $defaultRegion
+    $region = ""
+    while ([string]::IsNullOrWhiteSpace($region)) {
+        $region = Read-Host "AWS region (e.g., us-east-1, us-west-2, eu-west-1)"
+        if ([string]::IsNullOrWhiteSpace($region)) {
+            Write-Host "Region is required." -ForegroundColor Yellow
+        }
     }
 
     # Construct the restic repository URL
