@@ -84,7 +84,8 @@ function Write-Log {
 }
 
 function Get-PlatformDefaults {
-    if ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)) {
+    # Requires PowerShell Core 7+
+    if ($IsWindows) {
         @{
             IsWindows = $true
             ConfigPath = Join-Path $env:USERPROFILE ".cold-storage\config.json"
@@ -150,6 +151,9 @@ function Set-ResticEnvironment {
     $env:AWS_PROFILE = $Config.aws_profile
     $env:RESTIC_REPOSITORY = $Config.restic_repository
     $env:RESTIC_PASSWORD_FILE = $Config.restic_password_file
+
+    # Set script-level restic path
+    $script:ResticExe = if ($Config.restic_executable) { $Config.restic_executable } else { "restic" }
 }
 
 function Invoke-ResticBackup {
@@ -173,9 +177,9 @@ function Invoke-ResticBackup {
     $args += "--tag"
     $args += "archive-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 
-    Write-Host "Running: restic $($args -join ' ')"
+    Write-Host "Running: $script:ResticExe $($args -join ' ')"
 
-    $output = & restic @args 2>&1
+    $output = & $script:ResticExe @args 2>&1
 
     if ($LASTEXITCODE -ne 0) {
         throw "restic backup failed: $output"
@@ -197,7 +201,7 @@ function Invoke-ResticBackup {
     }
 
     # If we can't parse the snapshot ID from output, get the latest
-    $snapshots = restic snapshots --json --latest 1 2>&1 | ConvertFrom-Json
+    $snapshots = & $script:ResticExe snapshots --json --latest 1 2>&1 | ConvertFrom-Json
     if ($snapshots -and $snapshots.Count -gt 0) {
         return $snapshots[0].id
     }
@@ -215,14 +219,14 @@ function Test-ResticBackup {
     Write-Host "Verifying backup integrity..."
 
     # Quick check - verify repository structure
-    $result = restic check 2>&1
+    $result = & $script:ResticExe check 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Repository check output: $result" -ForegroundColor Yellow
         return $false
     }
 
     # Verify the specific snapshot exists
-    $snapshots = restic snapshots --json 2>&1 | ConvertFrom-Json
+    $snapshots = & $script:ResticExe snapshots --json 2>&1 | ConvertFrom-Json
     $found = $snapshots | Where-Object { $_.id -like "$SnapshotId*" -or $_.short_id -eq $SnapshotId }
 
     if (-not $found) {

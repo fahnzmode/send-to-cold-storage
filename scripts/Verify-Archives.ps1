@@ -74,7 +74,8 @@ function Write-Log {
 }
 
 function Get-PlatformDefaults {
-    if ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)) {
+    # Requires PowerShell Core 7+
+    if ($IsWindows) {
         @{
             IsWindows = $true
             ConfigPath = Join-Path $env:USERPROFILE ".cold-storage\config.json"
@@ -103,6 +104,9 @@ function Set-ResticEnvironment {
     $env:AWS_PROFILE = $Config.aws_profile
     $env:RESTIC_REPOSITORY = $Config.restic_repository
     $env:RESTIC_PASSWORD_FILE = $Config.restic_password_file
+
+    # Set script-level restic path
+    $script:ResticExe = if ($Config.restic_executable) { $Config.restic_executable } else { "restic" }
 }
 
 function Get-TrackingDatabase {
@@ -132,7 +136,7 @@ function Test-ResticRepository {
     }
 
     $startTime = Get-Date
-    $output = & restic @args 2>&1
+    $output = & $script:ResticExe @args 2>&1
     $duration = (Get-Date) - $startTime
 
     if ($LASTEXITCODE -eq 0) {
@@ -152,7 +156,7 @@ function Test-ResticRepository {
 }
 
 function Get-ResticSnapshots {
-    $output = restic snapshots --json 2>&1
+    $output = & $script:ResticExe snapshots --json 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to list snapshots: $output"
     }

@@ -73,15 +73,9 @@ function Get-PlatformDefaults {
     <#
     .SYNOPSIS
         Returns platform-appropriate default paths.
+        Requires PowerShell Core 7+
     #>
-    if ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)) {
-        # Windows (PowerShell 5.1 doesn't have $IsWindows, so check version)
-        $isWindowsPlatform = $true
-    } else {
-        $isWindowsPlatform = $false
-    }
-
-    if ($isWindowsPlatform) {
+    if ($IsWindows) {
         @{
             IsWindows = $true
             ConfigDir = Join-Path $env:USERPROFILE ".cold-storage"

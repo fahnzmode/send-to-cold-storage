@@ -221,8 +221,8 @@ function Main {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
 
-    # Check if running on Windows
-    if (-not ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6))) {
+    # Check if running on Windows (requires PowerShell Core 7+)
+    if (-not $IsWindows) {
         Write-Host "This script is only for Windows." -ForegroundColor Yellow
         Write-Host "Generating .reg files for manual installation..."
         Export-RegistryFile -ScriptPath $ScriptPath

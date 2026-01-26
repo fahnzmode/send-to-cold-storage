@@ -23,6 +23,7 @@
 | Scripts in `scripts/` directory | Clean project organization; deploy to `C:\Scripts\` on Windows |
 | JSON config file | Human-readable, easy to edit, sufficient for this use case |
 | Direct Windows development | Maximum agent autonomy, eliminates cross-platform issues |
+| PowerShell Core 7+ (not 5.1) | Actively developed, modern features, user preference |
 
 ## Issues Encountered
 | Issue | Resolution |

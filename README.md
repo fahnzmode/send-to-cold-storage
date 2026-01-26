@@ -59,9 +59,11 @@ This system supplements existing Backblaze backup by providing selective cold ar
 
 ## Prerequisites
 
-- Windows 10/11 with PowerShell 5.1+
+- Windows 10/11 with **PowerShell Core 7+** (not Windows PowerShell 5.1)
 - AWS account with S3 access
 - Administrator access (for context menu registry modifications)
+
+To install PowerShell Core: `winget install Microsoft.PowerShell`
 
 ## Development Workflow
 

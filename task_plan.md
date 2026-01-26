@@ -167,7 +167,7 @@ Build a PowerShell-based cold storage archival system that allows selective arch
 (None yet - track as implementation proceeds)
 
 ## Dependencies & Prerequisites
-- Windows 10/11 with PowerShell 5.1+
+- Windows 10/11 with **PowerShell Core 7+** (`winget install Microsoft.PowerShell`)
 - WinGet package manager (built into Windows 11, available on Windows 10 via App Installer)
 - AWS account with S3 access
 - Administrator access (for registry modifications)

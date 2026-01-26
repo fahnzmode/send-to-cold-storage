@@ -89,7 +89,8 @@ $ErrorActionPreference = "Stop"
 #region Helper Functions
 
 function Get-PlatformDefaults {
-    if ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)) {
+    # Requires PowerShell Core 7+
+    if ($IsWindows) {
         @{
             IsWindows = $true
             ConfigPath = Join-Path $env:USERPROFILE ".cold-storage\config.json"

@@ -101,7 +101,8 @@ function Write-Log {
 }
 
 function Get-PlatformDefaults {
-    if ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)) {
+    # Requires PowerShell Core 7+
+    if ($IsWindows) {
         @{
             IsWindows = $true
             ConfigPath = Join-Path $env:USERPROFILE ".cold-storage\config.json"
@@ -140,6 +141,9 @@ function Set-ResticEnvironment {
     $env:AWS_PROFILE = $Config.aws_profile
     $env:RESTIC_REPOSITORY = $Config.restic_repository
     $env:RESTIC_PASSWORD_FILE = $Config.restic_password_file
+
+    # Set script-level restic path
+    $script:ResticExe = if ($Config.restic_executable) { $Config.restic_executable } else { "restic" }
 }
 
 function Get-TrackingDatabase {
@@ -157,7 +161,7 @@ function Get-ResticSnapshots {
     .SYNOPSIS
         Get list of restic snapshots.
     #>
-    $output = restic snapshots --json 2>&1
+    $output = & $script:ResticExe snapshots --json 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to list snapshots: $output"
     }
@@ -199,7 +203,7 @@ function Get-SnapshotContents {
     #>
     param([string]$SnapshotId)
 
-    $output = restic ls $SnapshotId --json 2>&1
+    $output = & $script:ResticExe ls $SnapshotId --json 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to list snapshot contents: $output"
     }
@@ -227,9 +231,9 @@ function Invoke-ResticRestore {
         $args += $IncludePath
     }
 
-    Write-Host "Running: restic $($args -join ' ')"
+    Write-Host "Running: $script:ResticExe $($args -join ' ')"
 
-    $output = & restic @args 2>&1
+    $output = & $script:ResticExe @args 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Restore failed: $output"
     }
@@ -514,7 +518,7 @@ function Main {
 
     if ($CheckStatus) {
         Write-Host "Checking repository status..."
-        $result = restic snapshots 2>&1
+        $result = & $script:ResticExe snapshots 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Repository accessible." -ForegroundColor Green
             $snapshots = Get-ResticSnapshots

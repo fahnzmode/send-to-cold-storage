@@ -72,13 +72,8 @@ function Write-Log {
 }
 
 function Get-PlatformDefaults {
-    if ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)) {
-        $isWindowsPlatform = $true
-    } else {
-        $isWindowsPlatform = $false
-    }
-
-    if ($isWindowsPlatform) {
+    # Requires PowerShell Core 7+
+    if ($IsWindows) {
         @{
             IsWindows = $true
             ConfigPath = Join-Path $env:USERPROFILE ".cold-storage\config.json"
