@@ -211,49 +211,28 @@ function Initialize-AwsCredentials {
     param([string]$AwsProfileName = "cold-storage")
 
     Write-Step "Configuring AWS credentials for profile '$AwsProfileName'..."
-    Write-Host "You'll need your AWS Access Key ID and Secret Access Key."
+    Write-Host "You'll be prompted by the AWS CLI to enter your credentials securely."
     Write-Host "These should be for a user with S3 access to your cold storage bucket."
     Write-Host ""
-
-    $accessKey = Read-Host "AWS Access Key ID"
-    $secretKey = Read-Host "AWS Secret Access Key" -AsSecureString
-
-    $region = ""
-    while ([string]::IsNullOrWhiteSpace($region)) {
-        $region = Read-Host "AWS Region (e.g., us-east-1, us-west-2, eu-west-1)"
-        if ([string]::IsNullOrWhiteSpace($region)) {
-            Write-Host "Region is required." -ForegroundColor Yellow
-        }
-    }
-
-    # Convert SecureString to plain text for aws configure
-    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secretKey)
-    $secretKeyPlain = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+    Write-Host "When prompted, enter:"
+    Write-Host "  - AWS Access Key ID"
+    Write-Host "  - AWS Secret Access Key"
+    Write-Host "  - Default region name (e.g., us-east-1, us-west-2)"
+    Write-Host "  - Default output format (just press Enter for default)"
+    Write-Host ""
 
     try {
-        # Use aws configure to set up the profile
-        $env:AWS_ACCESS_KEY_ID = $accessKey
-        $env:AWS_SECRET_ACCESS_KEY = $secretKeyPlain
-        $env:AWS_DEFAULT_REGION = $region
-
-        aws configure set aws_access_key_id $accessKey --profile $AwsProfileName
-        aws configure set aws_secret_access_key $secretKeyPlain --profile $AwsProfileName
-        aws configure set region $region --profile $AwsProfileName
-
-        # Clear sensitive data
-        $secretKeyPlain = $null
-        Remove-Variable secretKeyPlain -ErrorAction SilentlyContinue
+        # Use AWS CLI's built-in secure input
+        aws configure --profile $AwsProfileName
+        if ($LASTEXITCODE -ne 0) {
+            throw "aws configure exited with code $LASTEXITCODE"
+        }
 
         Write-Success "AWS credentials configured for profile '$AwsProfileName'"
         return $true
     } catch {
         Write-Error "Failed to configure AWS credentials: $_"
         return $false
-    } finally {
-        # Clear environment variables
-        Remove-Item Env:AWS_ACCESS_KEY_ID -ErrorAction SilentlyContinue
-        Remove-Item Env:AWS_SECRET_ACCESS_KEY -ErrorAction SilentlyContinue
     }
 }
 

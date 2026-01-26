@@ -8,8 +8,29 @@
 
 $ErrorActionPreference = "Stop"
 
-# Configuration values (from findings.md)
-$resticExe = 'C:\Users\tony\AppData\Local\Microsoft\WinGet\Packages\restic.restic_Microsoft.Winget.Source_8wekyb3d8bbwe\restic_0.18.1_windows_amd64.exe'
+# Find restic executable dynamically
+$resticExe = $env:RESTIC_EXE
+if (-not $resticExe) {
+    $resticExe = (Get-Command 'restic' -ErrorAction SilentlyContinue)?.Source
+}
+if (-not $resticExe) {
+    # Search common winget installation locations
+    $searchPaths = @(
+        "$env:LOCALAPPDATA\Microsoft\WinGet\Packages"
+    )
+    foreach ($searchPath in $searchPaths) {
+        if (Test-Path $searchPath) {
+            $found = Get-ChildItem -Path $searchPath -Recurse -Filter "restic*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+                $resticExe = $found.FullName
+                break
+            }
+        }
+    }
+}
+if (-not $resticExe) {
+    throw "Restic executable not found. Install restic (winget install restic.restic) or set RESTIC_EXE environment variable."
+}
 $configDir = Join-Path $env:USERPROFILE '.cold-storage'
 $configPath = Join-Path $configDir 'config.json'
 $passwordFile = Join-Path $configDir '.restic-password'

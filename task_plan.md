@@ -1,5 +1,8 @@
 # Task Plan: Cold Storage Archival System Implementation
 
+> **Requires PowerShell Core 7+** - This project targets PowerShell Core 7+, not Windows PowerShell 5.1.
+> Install with: `winget install Microsoft.PowerShell`
+
 ## Goal
 Build a PowerShell-based cold storage archival system that allows selective archival of files to AWS S3 Glacier Deep Archive to free up local disk space while maintaining Backblaze as primary backup.
 

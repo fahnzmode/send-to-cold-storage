@@ -338,7 +338,7 @@ function Show-Summary {
     if ($Deleted) {
         Write-Host "Staged files have been deleted." -ForegroundColor Yellow
     } else {
-        Write-Host "Staged files have been kept (use -NoDelete was specified or delete manually)." -ForegroundColor Yellow
+        Write-Host "Staged files have been kept (-NoDelete was specified, or delete manually)." -ForegroundColor Yellow
     }
     Write-Host ""
     Write-Host "View archived items: .\Query-ColdStorage.ps1"

@@ -267,7 +267,10 @@ function Show-RestoreOptions {
     Write-Host ""
 
     # Estimate retrieval cost
-    $retrievalCostPerGB = 0.0025  # ~$0.0025/GB for Glacier Deep Archive standard retrieval
+    # Source: AWS S3 Glacier Deep Archive pricing (as of 2024)
+    # Standard retrieval: ~$0.0025/GB, takes 12-48 hours
+    # See: https://aws.amazon.com/s3/pricing/ for current rates
+    $retrievalCostPerGB = 0.0025
     $estimatedCost = [math]::Round(($Item.size_bytes / 1GB) * $retrievalCostPerGB, 4)
     Write-Host "Estimated retrieval cost: `$$estimatedCost USD" -ForegroundColor Yellow
     Write-Host "(Glacier Deep Archive: 12-48 hour retrieval time)" -ForegroundColor Yellow
