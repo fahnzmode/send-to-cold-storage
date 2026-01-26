@@ -308,93 +308,42 @@ Find items in "Projects, Video" folder
 
 ## Development Environment
 
-### Devcontainer Configuration
-This project uses a devcontainer for autonomous development with Claude Code. The container includes:
+### Direct Windows Development
 
-**Installed Tools:**
-- PowerShell Core (latest) - For script development and testing
-- AWS CLI (latest) - For S3 integration testing
-- Restic (v0.17.3) - For backup tool testing
-- Node.js LTS - For Claude Code CLI
-- Git - For version control
+This project uses **direct Windows development** with Claude Code for maximum autonomy. The devcontainer approach was disabled to eliminate the user being a middle-man between Linux development and Windows testing.
 
-**VS Code Extensions:**
-- ms-vscode.powershell - PowerShell language support
-- amazonwebservices.aws-toolkit-vscode - AWS integration
-- editorconfig.editorconfig - Code formatting
+**Current Workflow:**
+- Claude Code agent runs directly on the target Windows machine
+- Agent handles: script development, testing, AWS operations, restic commands, file operations
+- User handles only: initial AWS credential setup, final approval of changes
 
-**Container Configuration:**
-- User: root (for autonomous operations)
-- Memory: 4GB limit
-- CPUs: 2 cores
-- Security: Restricted capabilities with no-new-privileges
+**Benefits of Direct Windows Development:**
+- ✅ Test Windows-specific features immediately (registry, drive letters, context menus)
+- ✅ No cross-platform compatibility issues
+- ✅ Agent can iterate autonomously without user intervention
+- ✅ Faster development cycle
+- ✅ Real-world testing from the start
 
-### Development vs Deployment
+**What the Agent Handles Autonomously:**
+- Script development and modification
+- Running and testing all PowerShell scripts
+- AWS CLI operations (with pre-configured credentials)
+- Restic backup/restore operations
+- File operations and path handling
+- Error diagnosis and fixes
+- Git operations (commits, branches, PRs)
 
-**Important Distinction:**
-- **Development**: Scripts are written and tested in Linux devcontainer
-- **Deployment**: Scripts run on Windows 10/11 with PowerShell 5.1+
-
-**Hybrid Development Workflow:**
-
-**Phase 1: Devcontainer Development (~80% of work)**
-- Autonomous agent develops PowerShell script logic
-- Tests basic functionality:
-  - File operations (create, move, delete)
-  - AWS CLI commands (S3 operations)
-  - Restic commands (backup, verify, restore)
-  - JSON parsing and manipulation
-  - Error handling and logging
-- Validates PowerShell syntax and best practices
-- Creates comprehensive documentation
-
-**Phase 2: Windows Testing (~20% of work)**
-- Manual testing on Windows system:
-  - Registry modifications (context menu integration)
-  - Drive letter handling (C:\, S:\, etc.)
-  - Windows-specific path separators (backslashes)
-  - Windows PowerShell 5.1 compatibility
-  - WinGet installation process
-  - Actual staging and archival workflow
-  - Message box dialogs and Windows UI
-
-**Phase 3: Iteration**
-- Report Windows-specific issues to agent
-- Agent fixes in devcontainer
-- Re-test on Windows
-- Repeat until fully functional
-
-**What CAN be tested in devcontainer:**
-- ✅ Script logic and control flow
-- ✅ AWS S3 operations
-- ✅ Restic backup/restore operations
-- ✅ JSON file manipulation
-- ✅ Error handling
-- ✅ PowerShell syntax validation
-
-**What CANNOT be tested in devcontainer:**
-- ❌ Windows Registry operations
-- ❌ Windows drive letters (C:\, S:\)
-- ❌ Windows path separators
-- ❌ Context menu integration
-- ❌ Windows message boxes
-- ❌ PowerShell 5.1 specific behavior
-- ❌ WinGet package installation
-
-**Cross-platform Considerations:**
-- PowerShell Core in devcontainer for development
-- Windows PowerShell 5.1+ on target system
-- Path handling must account for Windows (backslashes, drive letters)
-- Registry operations are Windows-only (cannot be tested in container)
-- Final testing must be performed on actual Windows system
+**What Requires User Intervention:**
+- Initial AWS credential configuration (one-time setup)
+- Approving destructive operations if prompted
+- Final review and PR approval
 
 **Testing Strategy:**
-1. Develop logic in devcontainer with PowerShell Core
-2. Test basic functionality (file operations, AWS CLI, restic)
-3. Deploy to Windows test environment
-4. Test Windows-specific features (registry, context menu, drive paths)
-5. Report issues back to agent for fixes
-6. Iterate until complete
+1. Agent runs scripts directly on Windows
+2. Agent verifies functionality end-to-end
+3. Agent fixes any issues discovered
+4. Agent creates PR when complete
+5. User reviews and approves
 
 ---
 

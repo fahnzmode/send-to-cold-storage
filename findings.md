@@ -1,62 +1,52 @@
 # Findings & Decisions
-<!--
-  WHAT: This file stores all research, discoveries, and information you learn during the task.
-  WHY: Your context window is limited. Writing findings here creates persistent memory.
-  WHEN: Update after every 2 view/browser/search operations to prevent information loss.
--->
 
 ## Requirements
-<!--
-  WHAT: Specific deliverables and constraints from the user.
-  WHY: Keeps you aligned with what was actually asked for.
-  WHEN: Fill this in during Phase 1 after understanding the user's needs.
--->
--
+- PowerShell-based cold storage archival system for Windows
+- Right-click context menu integration for staging files
+- Use restic + AWS S3 Glacier Deep Archive for backup
+- JSON tracking database for audit trail
+- Must verify backups before deleting local files
+- Direct Windows development for maximum agent autonomy
 
 ## Research Findings
-<!--
-  WHAT: Key discoveries from exploration, searches, and reading.
-  WHY: Information found early is often needed later. This prevents re-searching.
-  WHEN: Update after every 2 view/browser/search operations (the "2-Action Rule").
--->
--
+- restic supports S3 backend natively with AWS_PROFILE environment variable
+- Target environment: Windows PowerShell 5.1+ (direct Windows development)
+- AWS credentials configured via `~/.aws/credentials` with `cold-storage` profile
+- S3 bucket `fahnzmode-cold-storage-archive` exists and is accessible in us-east-2
+- Devcontainer disabled - using direct Windows development for agent autonomy
 
 ## Technical Decisions
-<!--
-  WHAT: Architecture and design choices with rationale.
-  WHY: Decisions need justification. This helps you remember why you chose an approach.
-  WHEN: Update during Phase 2 (Planning) and whenever you make significant choices.
--->
 | Decision | Rationale |
 |----------|-----------|
-|          |           |
+| AWS credentials file with named profile | Standard approach, restic supports it natively |
+| Profile name: `cold-storage` | Descriptive, easy to remember |
+| Scripts in `scripts/` directory | Clean project organization; deploy to `C:\Scripts\` on Windows |
+| JSON config file | Human-readable, easy to edit, sufficient for this use case |
+| Direct Windows development | Maximum agent autonomy, eliminates cross-platform issues |
+| PowerShell Core 7+ (not 5.1) | Actively developed, modern features, user preference |
 
 ## Issues Encountered
-<!--
-  WHAT: Problems you've run into and how you solved them.
-  WHY: Issues often recur. Documenting solutions prevents repeating mistakes.
-  WHEN: Update immediately when you encounter and resolve an issue.
--->
 | Issue | Resolution |
 |-------|------------|
-|       |            |
+| (none yet) | |
 
 ## Resources
-<!--
-  WHAT: Reference links, file paths, and external resources.
-  WHY: Quick access to important references without re-searching.
-  WHEN: Add whenever you find a useful resource.
--->
--
+- Restic docs: https://restic.readthedocs.io/
+- Restic S3 backend: https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html#amazon-s3
+- AWS S3 Glacier pricing: https://aws.amazon.com/s3/pricing/
+- Project implementation plan: implementation_plan.md
+- Task breakdown: task_plan.md
+
+## Configuration Values
+```
+AWS_PROFILE: cold-storage
+S3_BUCKET: fahnzmode-cold-storage-archive
+AWS_REGION: us-east-2
+RESTIC_REPO: s3:s3.us-east-2.amazonaws.com/fahnzmode-cold-storage-archive
+```
 
 ## Visual/Browser Findings
-<!--
-  WHAT: Text captures of multimodal content (screenshots, web pages, diagrams).
-  WHY: Visual information is lost when context resets. Text captures preserve it.
-  WHEN: Update IMMEDIATELY after viewing any visual content.
--->
--
+- (none - no web browsing performed yet)
 
 ---
 *Update this file after every 2 view/browser/search operations*
-*This prevents visual information from being lost*

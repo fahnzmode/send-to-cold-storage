@@ -1,5 +1,8 @@
 # Task Plan: Cold Storage Archival System Implementation
 
+> **Requires PowerShell Core 7+** - This project targets PowerShell Core 7+, not Windows PowerShell 5.1.
+> Install with: `winget install Microsoft.PowerShell`
+
 ## Goal
 Build a PowerShell-based cold storage archival system that allows selective archival of files to AWS S3 Glacier Deep Archive to free up local disk space while maintaining Backblaze as primary backup.
 
@@ -167,18 +170,18 @@ Build a PowerShell-based cold storage archival system that allows selective arch
 (None yet - track as implementation proceeds)
 
 ## Dependencies & Prerequisites
-- Windows 10/11 with PowerShell 5.1+ (target deployment environment)
+- Windows 10/11 with **PowerShell Core 7+** (`winget install Microsoft.PowerShell`)
 - WinGet package manager (built into Windows 11, available on Windows 10 via App Installer)
 - AWS account with S3 access
-- Administrator access (for registry modifications on Windows)
-- Restic binary (installed via winget or manual download on Windows)
+- Administrator access (for registry modifications)
+- Restic binary (installed via winget or manual download)
 
 **Development Environment:**
-- Devcontainer with PowerShell Core, AWS CLI, and restic
-- Claude Code CLI for autonomous agent development
+- Direct Windows development with Claude Code CLI
 - Git for version control
+- AWS credentials pre-configured with `cold-storage` profile
 
-**Note**: Scripts are developed in Linux devcontainer but designed to run on Windows. Final testing must be done on target Windows system.
+**Note**: Devcontainer was disabled in favor of direct Windows development for maximum agent autonomy.
 
 ## Testing Strategy
 1. Install and configure with minimal AWS credentials
@@ -199,45 +202,34 @@ Build a PowerShell-based cold storage archival system that allows selective arch
 - [ ] Tested with real data (10+ TB archived)
 
 ## Status
-**Currently in Phase 1: Setup & Configuration**
-- ✅ Development environment configured (devcontainer with PowerShell, AWS CLI, restic)
-- ✅ Project repository created and initialized
-- ✅ Planning documents created (task_plan.md, IMPLEMENTATION_REFERENCE.md)
-- Ready to begin implementation of Setup-Restic.ps1 script
+**Currently: Windows Testing Phase**
+- ✅ All 7 scripts implemented
+- ✅ Tested in Linux devcontainer (Phase 1)
+- ✅ Devcontainer disabled for direct Windows development
+- 🔄 Full Windows testing in progress
 - All prerequisites documented and understood
 
 ## Notes for Implementation
 
-### Development Workflow (Hybrid Approach)
+### Development Workflow (Direct Windows)
 
-**Phase 1: Devcontainer Development (Autonomous)**
-- Develop PowerShell script logic and structure
-- Test basic functionality: file operations, AWS CLI, restic commands
-- Validate PowerShell syntax and best practices
-- Create comprehensive error handling
-- Document script usage and parameters
+This project uses **direct Windows development** with Claude Code for maximum autonomy. The devcontainer was disabled to allow the AI agent to test directly on the target Windows environment, eliminating the user as a middle-man.
 
-**Phase 2: Windows Testing (Manual)**
-- Deploy scripts to Windows test environment
-- Test Windows-specific features:
-  - Registry modifications (context menu)
-  - Drive letter and path handling (C:\, S:\, etc.)
-  - Windows PowerShell 5.1 compatibility
-  - Actual file staging and archival workflow
-  - WinGet installation process
-- Report issues back for iteration
+**Agent Responsibilities:**
+- Develop and modify PowerShell scripts
+- Run and test all scripts directly on Windows
+- Test Windows-specific features (registry, context menu, drive letters)
+- Diagnose and fix issues autonomously
+- Commit changes and create PRs
 
-**Phase 3: Iteration**
-- Agent fixes issues based on Windows test feedback
-- Repeat cycle until fully functional
+**User Responsibilities:**
+- Initial AWS credential setup (one-time)
+- Final review and PR approval
 
 ### Development Guidelines
-- **Development environment**: Linux devcontainer with restic pre-installed
-- **Deployment target**: Windows 10/11 where scripts will actually run
-- Scripts will use WinGet to install restic on Windows (built into Windows 11, available via App Installer on Windows 10)
+- **Environment**: Windows 10/11 with PowerShell Core 7+
+- Scripts use WinGet to install restic (built into Windows 11, available via App Installer on Windows 10)
 - Fallback to manual download if WinGet unavailable
-- **Agent focus**: ~80% of functionality can be developed/tested in container (logic, AWS, restic)
-- **Manual testing required**: Windows-specific features (registry, drive letters, context menus)
 - Start with Setup-Restic.ps1 to get foundation working
 - Test each script thoroughly before moving to next phase
 - Use comprehensive error handling in all scripts
