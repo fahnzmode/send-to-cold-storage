@@ -84,8 +84,34 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | feature/implement-cold-storage-scripts branch, scripts complete and tested |
-| Where am I going? | Create PR for Windows testing phase |
+| Where am I? | feature/implement-cold-storage-scripts branch, scripts complete, starting Windows testing |
+| Where am I going? | Full Windows testing, then create PR |
 | What's the goal? | Cold storage archival system using restic + S3 Glacier Deep Archive |
-| What have I learned? | All scripts work in Linux, need Windows testing for context menu, paths |
-| What have I done? | Implemented 7 scripts, tested end-to-end workflow, fixed 3 bugs |
+| What have I learned? | All scripts work in Linux; devcontainer disabled for direct Windows development |
+| What have I done? | Implemented 7 scripts, tested in devcontainer, now testing directly on Windows |
+
+## Session: 2026-01-26
+
+### Workflow Change: Direct Windows Development
+- **Status:** in_progress
+- **Started:** 2026-01-26
+- Actions taken:
+  - Devcontainer disabled to allow direct Windows development
+  - Updated documentation (README.md, implementation_plan.md, task_plan.md, findings.md)
+  - Rationale: Maximize agent autonomy by testing directly on Windows, eliminate user as middle-man
+- Files modified:
+  - README.md - Rewrote for cold storage project, added direct Windows workflow
+  - implementation_plan.md - Replaced devcontainer section with direct Windows development
+  - task_plan.md - Updated development workflow and status
+  - findings.md - Updated requirements and technical decisions
+
+### Phase 5: Windows Testing
+- **Status:** in_progress
+- Actions planned:
+  - Test Setup-Restic.ps1 on Windows
+  - Test Move-ToColdStorage.ps1 on Windows
+  - Test Archive-Staged.ps1 on Windows
+  - Test Query-ColdStorage.ps1 on Windows
+  - Test Restore-FromColdStorage.ps1 on Windows
+  - Test Verify-Archives.ps1 on Windows
+  - Test Install-ContextMenu.ps1 on Windows

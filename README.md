@@ -1,94 +1,99 @@
-# Claude Agent Devcontainer Template
+# Cold Storage Archival System
 
-A devcontainer template for running Claude Code in an isolated environment, suitable for autonomous agent work.
+A PowerShell-based cold storage archival system that archives rarely-accessed files to AWS S3 Glacier Deep Archive via restic, freeing up local disk space while maintaining affordable backup coverage.
+
+## Overview
+
+This system supplements existing Backblaze backup by providing selective cold archival:
+- **Keep Backblaze** as primary backup (excellent value at $99/year for 48TB)
+- **Add restic + AWS S3 Glacier Deep Archive** for selective cold archival
+- **Cost**: ~$1/TB/month for archived data
 
 ## Features
 
-- Runs as `vscode` user (enables `--dangerously-skip-permissions`)
-- Node.js LTS pre-installed
-- Claude Code CLI pre-installed
-- Planning files for structured task management (via planning-with-files skill)
-- Autonomous workflow defined in `CLAUDE.md`
+- Windows Explorer right-click context menu integration
+- Encrypted, deduplicated backups via restic
+- JSON tracking database for audit trail
+- Search and query archived items
+- Restore from Glacier with integrity verification
+- Safety mechanisms: verification before deletion, comprehensive logging
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `Setup-Restic.ps1` | Initial setup - install restic, configure AWS, initialize repository |
+| `Move-ToColdStorage.ps1` | Stage files for archival (context menu integration) |
+| `Archive-Staged.ps1` | Backup staged files to S3 Glacier Deep Archive |
+| `Query-ColdStorage.ps1` | Search and browse archived items |
+| `Restore-FromColdStorage.ps1` | Restore files from Glacier |
+| `Verify-Archives.ps1` | Periodic integrity verification |
+| `Install-ContextMenu.ps1` | Install Windows right-click context menu |
 
 ## Quick Start
 
-1. **Use this template** to create a new repository
-2. **Open in VS Code** with the Dev Containers extension
-3. **Rebuild Container** when prompted
-4. **Authenticate Claude** in the terminal:
-   ```
-   claude
-   ```
-   - Select "Claude account with subscription" for Pro/Max users
-   - Complete OAuth via the manual code flow (copy URL, paste code back)
-
-5. **Install skills** (one-time per container):
-   ```
-   /plugin marketplace add OthmanAdi/planning-with-files
-   /plugin install planning-with-files@planning-with-files
-   /plugin install code-simplifier@claude-plugin-directory
+1. **Run setup**:
+   ```powershell
+   .\scripts\Setup-Restic.ps1
    ```
 
-6. **Start working** - invoke skills with:
+2. **Install context menu** (optional):
+   ```powershell
+   .\scripts\Install-ContextMenu.ps1
    ```
-   /planning-with-files    # For complex multi-step tasks
-   /code-simplifier        # To simplify and refine code
+
+3. **Stage files for archival**:
+   - Right-click files/folders → "Move to Cold Storage Staging", or
+   - Run `.\scripts\Move-ToColdStorage.ps1 -Path "C:\path\to\folder"`
+
+4. **Archive staged files**:
+   ```powershell
+   .\scripts\Archive-Staged.ps1
    ```
 
-## Autonomous Workflow
+5. **Query archives**:
+   ```powershell
+   .\scripts\Query-ColdStorage.ps1 -Statistics
+   .\scripts\Query-ColdStorage.ps1 -Search "*project*"
+   ```
 
-See `CLAUDE.md` for detailed agent instructions. The workflow:
+## Prerequisites
 
-1. **Initialize** - Receive project plan, create feature branch, populate planning files
-2. **Iterate** - Plan → Implement → Simplify → Test → Commit → Repeat
-3. **Complete** - Create PR to merge feature branch to `main`
+- Windows 10/11 with PowerShell 5.1+
+- AWS account with S3 access
+- Administrator access (for context menu registry modifications)
 
-To run fully autonomously:
-```bash
-claude --dangerously-skip-permissions
-```
+## Development Workflow
 
-Then provide a project plan and let the agent execute it.
+This project uses **direct Windows development** with Claude Code for maximum autonomy:
+
+- **Claude Code agent** handles: script development, testing, AWS operations, restic commands, file operations
+- **User handles only**: initial AWS credential setup, final approval of changes
+
+The devcontainer approach was disabled in favor of this direct workflow to minimize back-and-forth and allow the AI agent to test directly on the target Windows environment.
 
 ## Planning Files
 
-This template includes starter planning files from the planning-with-files skill:
-
+Development progress is tracked in:
 - `task_plan.md` - Phase-based task planning
 - `findings.md` - Research and decisions log
 - `progress.md` - Session progress tracking
 
-## Container Details
+## Documentation
 
-- **Base image:** mcr.microsoft.com/devcontainers/base:ubuntu (via Dockerfile)
-- **User:** vscode (enables autonomous mode)
-- **Memory:** 4GB limit
-- **CPUs:** 2
-- **PIDs:** 256 limit
-- **Security:** `no-new-privileges`, capabilities dropped except:
-  - CHOWN, SETUID, SETGID (file ownership)
-  - KILL (stop runaway processes)
-  - SYS_PTRACE (debugging)
-  - NET_BIND_SERVICE (low port binding)
-  - DAC_OVERRIDE (file permission bypass)
+See `implementation_plan.md` for detailed:
+- Component descriptions
+- Complete workflow diagrams
+- Cost estimates and calculations
+- Troubleshooting guide
+- Best practices and maintenance
 
-## Adding Runtimes
+## Cost Estimates
 
-The template includes Node.js LTS by default. To add other runtimes, edit `.devcontainer/devcontainer.json` and add features:
+| Archive Size | Monthly Cost |
+|--------------|--------------|
+| 10 TB | ~$10/month |
+| 20 TB | ~$20/month |
+| 30 TB | ~$30/month |
 
-```json
-"features": {
-  "ghcr.io/devcontainers/features/node:1": { "version": "lts" },
-  "ghcr.io/devcontainers/features/python:1": { "version": "3.12" },
-  "ghcr.io/devcontainers/features/go:1": { "version": "latest" },
-  "ghcr.io/devcontainers/features/rust:1": { "version": "latest" }
-}
-```
-
-See [available features](https://containers.dev/features) for more options.
-
-## Notes
-
-- Auth and plugins don't persist across container rebuilds
-- Stop/start (not rebuild) preserves your session
-- For fully autonomous work, use `claude --dangerously-skip-permissions`
+Retrieval: ~$0.0025/GB when needed (standard retrieval, 12-48 hours)

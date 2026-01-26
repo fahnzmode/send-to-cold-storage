@@ -6,24 +6,23 @@
 - Use restic + AWS S3 Glacier Deep Archive for backup
 - JSON tracking database for audit trail
 - Must verify backups before deleting local files
-- Cross-platform development (Linux devcontainer) with Windows deployment
+- Direct Windows development for maximum agent autonomy
 
 ## Research Findings
-- restic 0.17.3 installed and working in devcontainer
 - restic supports S3 backend natively with AWS_PROFILE environment variable
-- PowerShell Core 7.5.4 available for development; target is Windows PowerShell 5.1+
+- Target environment: Windows PowerShell 5.1+ (direct Windows development)
 - AWS credentials configured via `~/.aws/credentials` with `cold-storage` profile
 - S3 bucket `fahnzmode-cold-storage-archive` exists and is accessible in us-east-2
+- Devcontainer disabled - using direct Windows development for agent autonomy
 
 ## Technical Decisions
 | Decision | Rationale |
 |----------|-----------|
-| AWS credentials file with named profile | Cross-platform (Linux/Windows), standard approach, restic supports it natively |
+| AWS credentials file with named profile | Standard approach, restic supports it natively |
 | Profile name: `cold-storage` | Descriptive, easy to remember |
-| Parameterized paths in scripts | Allows testing in Linux devcontainer with different paths than Windows deployment |
 | Scripts in `scripts/` directory | Clean project organization; deploy to `C:\Scripts\` on Windows |
 | JSON config file | Human-readable, easy to edit, sufficient for this use case |
-| Platform detection in scripts | Use `$IsWindows` / `$IsLinux` to set appropriate default paths |
+| Direct Windows development | Maximum agent autonomy, eliminates cross-platform issues |
 
 ## Issues Encountered
 | Issue | Resolution |
