@@ -29,7 +29,7 @@
 
 .NOTES
     Author: Claude Code
-    Requires: PowerShell 5.1+ (Windows) or PowerShell Core 7+ (Linux/macOS)
+    Requires: PowerShell Core 7+
 #>
 
 [CmdletBinding()]

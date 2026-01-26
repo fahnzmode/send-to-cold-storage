@@ -227,7 +227,7 @@ This project uses **direct Windows development** with Claude Code for maximum au
 - Final review and PR approval
 
 ### Development Guidelines
-- **Environment**: Windows 10/11 with PowerShell 5.1+
+- **Environment**: Windows 10/11 with PowerShell Core 7+
 - Scripts use WinGet to install restic (built into Windows 11, available via App Installer on Windows 10)
 - Fallback to manual download if WinGet unavailable
 - Start with Setup-Restic.ps1 to get foundation working
