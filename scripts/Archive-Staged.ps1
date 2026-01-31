@@ -271,7 +271,7 @@ function Update-TrackingDatabaseArchived {
     }
 
     # Update statistics
-    $archivedItems = $db.archives | Where-Object { $_.status -in @("archived", "archived_and_deleted") }
+    $archivedItems = @($db.archives | Where-Object { $_.status -in @("archived", "archived_and_deleted") })
     $totalBytes = ($archivedItems | Measure-Object -Property size_bytes -Sum).Sum
     if (-not $totalBytes) { $totalBytes = 0 }
 
@@ -320,8 +320,10 @@ function Show-Summary {
         [bool]$Deleted
     )
 
-    $totalSize = ($Entries | Measure-Object -Property size_bytes -Sum).Sum
-    $totalFiles = ($Entries | Measure-Object -Property file_count -Sum).Sum
+    $sizeResult = $Entries | Measure-Object -Property size_bytes -Sum
+    $filesResult = $Entries | Measure-Object -Property file_count -Sum
+    $totalSize = if ($sizeResult.Sum) { $sizeResult.Sum } else { 0 }
+    $totalFiles = if ($filesResult.Sum) { $filesResult.Sum } else { 0 }
     $monthlyCost = [math]::Round($totalSize / 1TB * 1.0, 2)
 
     Write-Host ""
@@ -379,7 +381,7 @@ function Main {
 
     # Get staged items
     Write-Host "Scanning staging folder..."
-    $stagedItems = Get-StagedItems -StagingRoot $config.staging_root -TrackingDbPath $config.tracking_database
+    $stagedItems = @(Get-StagedItems -StagingRoot $config.staging_root -TrackingDbPath $config.tracking_database)
 
     if ($stagedItems.Count -eq 0) {
         Write-Host "No items to archive in staging folder." -ForegroundColor Yellow
@@ -388,8 +390,10 @@ function Main {
     }
 
     # Display items to be archived
-    $totalSize = ($stagedItems | Measure-Object -Property size_bytes -Sum).Sum
-    $totalFiles = ($stagedItems | Measure-Object -Property file_count -Sum).Sum
+    $sizeResult = $stagedItems | Measure-Object -Property size_bytes -Sum
+    $filesResult = $stagedItems | Measure-Object -Property file_count -Sum
+    $totalSize = if ($sizeResult.Sum) { $sizeResult.Sum } else { 0 }
+    $totalFiles = if ($filesResult.Sum) { $filesResult.Sum } else { 0 }
 
     Write-Host ""
     Write-Host "Items to archive:" -ForegroundColor Cyan
