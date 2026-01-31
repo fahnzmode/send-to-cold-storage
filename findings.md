@@ -10,10 +10,11 @@
 
 ## Research Findings
 - restic supports S3 backend natively with AWS_PROFILE environment variable
-- Target environment: Windows PowerShell 5.1+ (direct Windows development)
+- Target environment: PowerShell Core 7+ (not Windows PowerShell 5.1)
 - AWS credentials configured via `~/.aws/credentials` with `cold-storage` profile
-- S3 bucket `fahnzmode-cold-storage-archive` exists and is accessible in us-east-2
+- S3 bucket configured per-install (not hardcoded in repo)
 - Devcontainer disabled - using direct Windows development for agent autonomy
+- Windows 11 modern context menu requires COM DLL; classic menu via registry is simpler
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -28,7 +29,11 @@
 ## Issues Encountered
 | Issue | Resolution |
 |-------|------------|
-| (none yet) | |
+| `$IsWindows` not available in PowerShell 5.1 | Target PowerShell Core 7+ only |
+| restic not in PATH after winget install | Store full path in config, use `restic_executable` |
+| winget installs restic as `restic_0.18.1_windows_amd64.exe` | Search for `restic*.exe` pattern |
+| Interactive scripts hang in non-interactive contexts | Created `Setup-Config.ps1` with mandatory params |
+| PowerShell array/null handling edge cases | Wrap with `@()` and add null checks |
 
 ## Resources
 - Restic docs: https://restic.readthedocs.io/
@@ -39,10 +44,14 @@
 
 ## Configuration Values
 ```
-AWS_PROFILE: cold-storage
-S3_BUCKET: fahnzmode-cold-storage-archive
-AWS_REGION: us-east-2
-RESTIC_REPO: s3:s3.us-east-2.amazonaws.com/fahnzmode-cold-storage-archive
+AWS_PROFILE: cold-storage (default, configurable)
+S3_BUCKET: (configured per-install via Setup-Restic.ps1 or Setup-Config.ps1)
+AWS_REGION: (configured per-install)
+RESTIC_REPO: s3:s3.<region>.amazonaws.com/<bucket>
+Scripts: C:\Scripts\ColdStorage\
+Config: ~\.cold-storage\config.json
+Password: ~\.cold-storage\.restic-password
+Staging: C:\ColdStorageStaging\
 ```
 
 ## Visual/Browser Findings

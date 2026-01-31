@@ -125,6 +125,20 @@
   - ✅ Created PR #1 and addressed Copilot review feedback
   - ✅ PR merged to main
 
+## Session: 2026-01-31
+
+### Post-Merge Polish
+- **Status:** completed
+- Actions taken:
+  - Changed default script path from `C:\Scripts` to `C:\Scripts\ColdStorage`
+  - Updated context menu text from "Move to Cold Storage Staging" to "Send to Cold Storage"
+  - Regenerated .reg files with new path and text
+  - Updated documentation (README.md, findings.md, progress.md)
+  - Added multi-PC setup instructions to README
+  - Added automation ideas to README
+
 ## Project Status: COMPLETE
 
 The cold storage archival system is fully implemented and tested. All scripts are on the `main` branch and ready for use.
+
+**Deployed to:** `C:\Scripts\ColdStorage\`
