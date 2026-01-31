@@ -82,6 +82,23 @@ To archive from multiple PCs to the same S3 repository:
 
 **Important**: All PCs must use the same restic password to access the shared repository. The password is stored in `~\.cold-storage\.restic-password`.
 
+## Network Drive Support
+
+The system automatically handles files on network drives:
+
+- **Mapped drives** (`M:\`, `Z:\`, etc.) are converted to UNC paths (`\\Server\Share\...`)
+- **Staging folders** are created on the same network share as the source files
+- **No network copying** - files are moved locally on the share, then uploaded directly to S3
+- **Tracking databases** live alongside staging folders for multi-PC coordination
+
+**Example workflow:**
+1. Right-click `\\NAS\Media\OldProjects\2013` → "Send to Cold Storage"
+2. Files moved to `\\NAS\Media\ColdStorageStaging\OldProjects\2013`
+3. Tracking DB created at `\\NAS\Media\ColdStorageStaging\cold_storage_tracking.json`
+4. Any PC with access to that share can run Archive, Query, or Verify
+
+**Path storage**: All paths are stored as UNC paths in tracking databases, so they work consistently regardless of how each PC has the share mapped.
+
 ## Automation Ideas
 
 - **Scheduled archiving**: Create a Task Scheduler job to run `Archive-Staged.ps1` daily/weekly

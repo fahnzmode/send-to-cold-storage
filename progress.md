@@ -147,6 +147,16 @@
   - Reset tracking database after S3 bucket was reinitialized
   - All shortcuts now working correctly
 
+### Multi-Location / Network Drive Support
+- **Status:** completed
+- Actions taken:
+  - Added UNC path conversion (mapped drives → UNC paths)
+  - Dynamic staging root creation on same root as source files
+  - Auto-registration of new staging roots in main config
+  - Multi-root scanning in Archive, Query, Verify, and Restore scripts
+  - Merged tracking database views across all accessible sources
+  - Updated documentation with network drive workflow
+
 ## Project Status: COMPLETE
 
 The cold storage archival system is fully implemented and tested. All scripts are on the `main` branch and ready for use.

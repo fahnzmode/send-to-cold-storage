@@ -21,10 +21,13 @@
 |----------|-----------|
 | AWS credentials file with named profile | Standard approach, restic supports it natively |
 | Profile name: `cold-storage` | Descriptive, easy to remember |
-| Scripts in `scripts/` directory | Clean project organization; deploy to `C:\Scripts\` on Windows |
+| Scripts in `scripts/` directory | Clean project organization; deploy to `C:\Scripts\ColdStorage\` on Windows |
 | JSON config file | Human-readable, easy to edit, sufficient for this use case |
 | Direct Windows development | Maximum agent autonomy, eliminates cross-platform issues |
 | PowerShell Core 7+ (not 5.1) | Actively developed, modern features, user preference |
+| UNC paths for network files | Consistent across PCs regardless of drive letter mapping |
+| Staging folder per source root | Avoids network copying; tracking DB lives with staged files |
+| Multi-root config registration | New staging roots auto-register in main config for discovery |
 
 ## Issues Encountered
 | Issue | Resolution |
