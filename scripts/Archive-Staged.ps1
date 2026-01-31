@@ -129,16 +129,85 @@ function Get-StagedItems {
     )
 
     $db = Get-Content $TrackingDbPath -Raw | ConvertFrom-Json
-    $stagedEntries = $db.archives | Where-Object { $_.status -eq "staged" }
+    $stagedEntries = @($db.archives | Where-Object { $_.status -eq "staged" })
 
     $results = @()
     foreach ($entry in $stagedEntries) {
         if (Test-Path $entry.staged_path) {
+            # Add staging root reference for later use
+            $entry | Add-Member -NotePropertyName "_staging_root" -NotePropertyValue $StagingRoot -Force
+            $entry | Add-Member -NotePropertyName "_tracking_db" -NotePropertyValue $TrackingDbPath -Force
             $results += $entry
         }
     }
 
     return $results
+}
+
+function Get-KnownStagingRoots {
+    <#
+    .SYNOPSIS
+        Get list of known staging roots from config.
+    #>
+    param($Config)
+
+    $roots = @()
+
+    # Check for staging_roots array in config (new format)
+    if ($Config.staging_roots) {
+        $roots += $Config.staging_roots
+    }
+
+    # Also check legacy single staging_root for backwards compatibility
+    if ($Config.staging_root -and $Config.staging_root -notin $roots) {
+        $roots += $Config.staging_root
+    }
+
+    return $roots
+}
+
+function Get-AccessibleStagingRoots {
+    <#
+    .SYNOPSIS
+        Filter staging roots to only those that are accessible.
+    #>
+    param([string[]]$StagingRoots)
+
+    $accessible = @()
+    foreach ($root in $StagingRoots) {
+        $trackingDb = Join-Path $root "cold_storage_tracking.json"
+        if (Test-Path $trackingDb) {
+            $accessible += @{
+                StagingRoot = $root
+                TrackingDb = $trackingDb
+            }
+        } elseif (Test-Path $root) {
+            # Staging root exists but no tracking DB - skip
+            Write-Host "Staging root exists but no tracking DB: $root" -ForegroundColor Yellow
+        }
+        # If root doesn't exist, silently skip (might be on disconnected network)
+    }
+
+    return $accessible
+}
+
+function Get-AllStagedItems {
+    <#
+    .SYNOPSIS
+        Get all staged items across all accessible staging roots.
+    #>
+    param([array]$StagingRoots)
+
+    $allItems = @()
+    foreach ($root in $StagingRoots) {
+        $items = @(Get-StagedItems -StagingRoot $root.StagingRoot -TrackingDbPath $root.TrackingDb)
+        $allItems += $items
+        if ($items.Count -gt 0) {
+            Write-Host "Found $($items.Count) staged item(s) in: $($root.StagingRoot)" -ForegroundColor Gray
+        }
+    }
+
+    return $allItems
 }
 
 function Set-ResticEnvironment {
@@ -159,14 +228,14 @@ function Set-ResticEnvironment {
 function Invoke-ResticBackup {
     <#
     .SYNOPSIS
-        Run restic backup on the staging folder.
+        Run restic backup on staging folder(s).
     #>
     param(
-        [string]$StagingRoot,
+        [string[]]$StagingRoots,
         [string]$Tag
     )
 
-    $args = @("backup", $StagingRoot, "--json")
+    $args = @("backup") + $StagingRoots + @("--json")
 
     if ($Tag) {
         $args += "--tag"
@@ -379,12 +448,28 @@ function Main {
     # Set restic environment
     Set-ResticEnvironment -Config $config
 
-    # Get staged items
-    Write-Host "Scanning staging folder..."
-    $stagedItems = @(Get-StagedItems -StagingRoot $config.staging_root -TrackingDbPath $config.tracking_database)
+    # Get all known staging roots
+    $knownRoots = @(Get-KnownStagingRoots -Config $config)
+    if ($knownRoots.Count -eq 0) {
+        Write-Host "No staging roots configured." -ForegroundColor Yellow
+        Write-Log "No staging roots configured" -LogFile $logFile
+        return
+    }
+
+    Write-Host "Checking staging locations..."
+    $accessibleRoots = @(Get-AccessibleStagingRoots -StagingRoots $knownRoots)
+
+    if ($accessibleRoots.Count -eq 0) {
+        Write-Host "No accessible staging locations found." -ForegroundColor Yellow
+        Write-Log "No accessible staging locations" -LogFile $logFile
+        return
+    }
+
+    # Get staged items from all accessible roots
+    $stagedItems = @(Get-AllStagedItems -StagingRoots $accessibleRoots)
 
     if ($stagedItems.Count -eq 0) {
-        Write-Host "No items to archive in staging folder." -ForegroundColor Yellow
+        Write-Host "No items to archive in any staging folder." -ForegroundColor Yellow
         Write-Log "No items to archive" -LogFile $logFile
         return
     }
@@ -419,13 +504,16 @@ function Main {
         return
     }
 
+    # Get unique staging roots that have items
+    $stagingRootsWithItems = @($stagedItems | ForEach-Object { $_._staging_root } | Sort-Object -Unique)
+
     # Perform backup
     Write-Host ""
     Write-Host "Creating restic backup..." -ForegroundColor Cyan
-    Write-Log "Starting restic backup" -LogFile $logFile
+    Write-Log "Starting restic backup for $($stagingRootsWithItems.Count) staging root(s)" -LogFile $logFile
 
     try {
-        $snapshotId = Invoke-ResticBackup -StagingRoot $config.staging_root -Tag $Tag
+        $snapshotId = Invoke-ResticBackup -StagingRoots $stagingRootsWithItems -Tag $Tag
         Write-Log "Backup complete. Snapshot: $snapshotId" -Level "SUCCESS" -LogFile $logFile
         Write-Host "Backup complete. Snapshot: $snapshotId" -ForegroundColor Green
     } catch {
@@ -450,20 +538,26 @@ function Main {
     Write-Log "Verification passed" -Level "SUCCESS" -LogFile $logFile
     Write-Host "Verification passed!" -ForegroundColor Green
 
-    # Update tracking database
+    # Update tracking databases (group items by their tracking DB)
     Write-Host ""
-    Write-Host "Updating tracking database..." -ForegroundColor Cyan
-    $entryIds = $stagedItems | ForEach-Object { $_.id }
+    Write-Host "Updating tracking database(s)..." -ForegroundColor Cyan
     $shouldDelete = -not $NoDelete
 
-    Update-TrackingDatabaseArchived `
-        -TrackingDbPath $config.tracking_database `
-        -EntryIds $entryIds `
-        -SnapshotId $snapshotId `
-        -Notes $Notes `
-        -Deleted $shouldDelete
+    $itemsByTrackingDb = $stagedItems | Group-Object -Property _tracking_db
+    foreach ($group in $itemsByTrackingDb) {
+        $trackingDbPath = $group.Name
+        $entryIds = @($group.Group | ForEach-Object { $_.id })
+        Write-Host "  Updating: $trackingDbPath ($($entryIds.Count) items)"
 
-    Write-Log "Tracking database updated" -Level "SUCCESS" -LogFile $logFile
+        Update-TrackingDatabaseArchived `
+            -TrackingDbPath $trackingDbPath `
+            -EntryIds $entryIds `
+            -SnapshotId $snapshotId `
+            -Notes $Notes `
+            -Deleted $shouldDelete
+    }
+
+    Write-Log "Tracking database(s) updated" -Level "SUCCESS" -LogFile $logFile
 
     # Delete staged files if verification passed and -NoDelete not specified
     if ($shouldDelete) {

@@ -156,6 +156,45 @@ function Get-TrackingDatabase {
     Get-Content $Path -Raw | ConvertFrom-Json
 }
 
+function Get-KnownStagingRoots {
+    param($Config)
+
+    $roots = @()
+    if ($Config.staging_roots) { $roots += $Config.staging_roots }
+    if ($Config.staging_root -and $Config.staging_root -notin $roots) { $roots += $Config.staging_root }
+    return $roots
+}
+
+function Get-AllTrackingDatabases {
+    param($Config)
+
+    $stagingRoots = @(Get-KnownStagingRoots -Config $Config)
+    $mergedDb = @{
+        version = "1.0"
+        archives = @()
+        _sources = @()
+    }
+
+    foreach ($root in $stagingRoots) {
+        $trackingDbPath = Join-Path $root "cold_storage_tracking.json"
+        if (Test-Path $trackingDbPath) {
+            try {
+                $db = Get-Content $trackingDbPath -Raw | ConvertFrom-Json
+                $mergedDb.archives += @($db.archives)
+                $mergedDb._sources += $root
+            } catch {
+                Write-Host "Warning: Could not read: $trackingDbPath" -ForegroundColor Yellow
+            }
+        }
+    }
+
+    if ($mergedDb._sources.Count -eq 0 -and $Config.tracking_database -and (Test-Path $Config.tracking_database)) {
+        return Get-TrackingDatabase -Path $Config.tracking_database
+    }
+
+    return [PSCustomObject]$mergedDb
+}
+
 function Get-ResticSnapshots {
     <#
     .SYNOPSIS
@@ -509,8 +548,11 @@ function Main {
     # Set restic environment
     Set-ResticEnvironment -Config $config
 
-    # Load tracking database
-    $db = Get-TrackingDatabase -Path $config.tracking_database
+    # Load tracking databases (merged from all accessible sources)
+    $db = Get-AllTrackingDatabases -Config $config
+    if ($db._sources -and $db._sources.Count -gt 1) {
+        Write-Host "Loaded from $($db._sources.Count) tracking databases" -ForegroundColor Gray
+    }
 
     # Handle different modes
     if ($ListSnapshots) {

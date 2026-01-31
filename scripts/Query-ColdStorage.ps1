@@ -162,6 +162,80 @@ function Get-TrackingDatabase {
     Get-Content $Path -Raw | ConvertFrom-Json
 }
 
+function Get-KnownStagingRoots {
+    <#
+    .SYNOPSIS
+        Get list of known staging roots from config.
+    #>
+    param($Config)
+
+    $roots = @()
+
+    if ($Config.staging_roots) {
+        $roots += $Config.staging_roots
+    }
+
+    if ($Config.staging_root -and $Config.staging_root -notin $roots) {
+        $roots += $Config.staging_root
+    }
+
+    return $roots
+}
+
+function Get-AllTrackingDatabases {
+    <#
+    .SYNOPSIS
+        Get all accessible tracking databases and merge their data.
+    #>
+    param($Config)
+
+    $stagingRoots = @(Get-KnownStagingRoots -Config $Config)
+
+    $mergedDb = @{
+        version = "1.0"
+        created = (Get-Date).ToString("o")
+        archives = @()
+        statistics = @{
+            total_archived_bytes = 0
+            total_items = 0
+            last_archive_date = $null
+            estimated_monthly_cost_usd = 0.0
+        }
+        _sources = @()
+    }
+
+    foreach ($root in $stagingRoots) {
+        $trackingDbPath = Join-Path $root "cold_storage_tracking.json"
+        if (Test-Path $trackingDbPath) {
+            try {
+                $db = Get-Content $trackingDbPath -Raw | ConvertFrom-Json
+                $mergedDb.archives += @($db.archives)
+                $mergedDb.statistics.total_archived_bytes += $db.statistics.total_archived_bytes
+                $mergedDb.statistics.total_items += $db.statistics.total_items
+                $mergedDb.statistics.estimated_monthly_cost_usd += $db.statistics.estimated_monthly_cost_usd
+
+                if ($db.statistics.last_archive_date) {
+                    $date = [datetime]::Parse($db.statistics.last_archive_date)
+                    if (-not $mergedDb.statistics.last_archive_date -or $date -gt [datetime]::Parse($mergedDb.statistics.last_archive_date)) {
+                        $mergedDb.statistics.last_archive_date = $db.statistics.last_archive_date
+                    }
+                }
+
+                $mergedDb._sources += @{ Root = $root; ItemCount = @($db.archives).Count }
+            } catch {
+                Write-Host "Warning: Could not read tracking database: $trackingDbPath" -ForegroundColor Yellow
+            }
+        }
+    }
+
+    # If no sources found, fall back to legacy single tracking_database if it exists
+    if ($mergedDb._sources.Count -eq 0 -and $Config.tracking_database -and (Test-Path $Config.tracking_database)) {
+        return Get-TrackingDatabase -Path $Config.tracking_database
+    }
+
+    return [PSCustomObject]$mergedDb
+}
+
 function Show-Statistics {
     <#
     .SYNOPSIS
@@ -192,9 +266,19 @@ function Show-Statistics {
     Write-Host "  Cold Storage Statistics              " -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Database created: $($Database.created)"
-    Write-Host "Database version: $($Database.version)"
-    Write-Host ""
+
+    # Show sources if merged from multiple databases
+    if ($Database._sources -and $Database._sources.Count -gt 0) {
+        Write-Host "--- Sources ---" -ForegroundColor Yellow
+        foreach ($source in $Database._sources) {
+            Write-Host "  $($source.Root) ($($source.ItemCount) items)"
+        }
+        Write-Host ""
+    } else {
+        Write-Host "Database created: $($Database.created)"
+        Write-Host "Database version: $($Database.version)"
+        Write-Host ""
+    }
     Write-Host "--- Item Counts ---" -ForegroundColor Yellow
     Write-Host "Total items tracked: $($archives.Count)"
     Write-Host "  Staged (pending): $stagedCount"
@@ -432,8 +516,13 @@ function Main {
     # Load configuration
     $config = Get-Configuration -ConfigPath $ConfigPath
 
-    # Load tracking database
-    $db = Get-TrackingDatabase -Path $config.tracking_database
+    # Load tracking databases (merged from all accessible sources)
+    $db = Get-AllTrackingDatabases -Config $config
+
+    # Show sources if multiple
+    if ($db._sources -and $db._sources.Count -gt 1) {
+        Write-Host "Loaded from $($db._sources.Count) tracking databases" -ForegroundColor Gray
+    }
 
     # Statistics mode
     if ($Statistics) {
