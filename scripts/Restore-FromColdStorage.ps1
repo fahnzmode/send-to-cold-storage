@@ -167,7 +167,7 @@ function Get-ResticSnapshots {
     }
 
     $snapshots = $output | ConvertFrom-Json
-    return $snapshots
+    return @($snapshots | Where-Object { $_ })
 }
 
 function Show-Snapshots {
@@ -367,13 +367,13 @@ function Search-ArchivedItems {
         [string]$SearchTerm
     )
 
-    $archived = $Archives | Where-Object { $_.status -in @("archived", "archived_and_deleted") }
+    $archived = @($Archives | Where-Object { $_.status -in @("archived", "archived_and_deleted") })
 
     if ($SearchTerm) {
-        $archived = $archived | Where-Object {
+        $archived = @($archived | Where-Object {
             $_.original_path -like $SearchTerm -or
             $_.notes -like $SearchTerm
-        }
+        })
     }
 
     return $archived
@@ -408,7 +408,7 @@ function Show-InteractiveRestore {
         switch ($choice.ToUpper()) {
             "1" {
                 $searchTerm = Read-Host "Enter search term (wildcards: *2013*)"
-                $results = Search-ArchivedItems -Archives $Database.archives -SearchTerm $searchTerm
+                $results = @(Search-ArchivedItems -Archives $Database.archives -SearchTerm $searchTerm)
 
                 if ($results.Count -eq 0) {
                     Write-Host "No items found." -ForegroundColor Yellow
@@ -434,7 +434,7 @@ function Show-InteractiveRestore {
                 }
             }
             "2" {
-                $results = Search-ArchivedItems -Archives $Database.archives
+                $results = @(Search-ArchivedItems -Archives $Database.archives)
                 if ($results.Count -eq 0) {
                     Write-Host "No archived items found." -ForegroundColor Yellow
                     continue
@@ -459,7 +459,7 @@ function Show-InteractiveRestore {
                 }
             }
             "3" {
-                $snapshots = Get-ResticSnapshots
+                $snapshots = @(Get-ResticSnapshots)
                 Show-Snapshots -Snapshots $snapshots
             }
             "4" {
@@ -514,7 +514,7 @@ function Main {
 
     # Handle different modes
     if ($ListSnapshots) {
-        $snapshots = Get-ResticSnapshots
+        $snapshots = @(Get-ResticSnapshots)
         Show-Snapshots -Snapshots $snapshots
         return
     }
@@ -524,7 +524,7 @@ function Main {
         $result = & $script:ResticExe snapshots 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Repository accessible." -ForegroundColor Green
-            $snapshots = Get-ResticSnapshots
+            $snapshots = @(Get-ResticSnapshots)
             Write-Host "Total snapshots: $($snapshots.Count)"
         } else {
             Write-Host "Repository check failed: $result" -ForegroundColor Red
@@ -543,7 +543,7 @@ function Main {
     }
 
     if ($Search) {
-        $results = Search-ArchivedItems -Archives $db.archives -SearchTerm $Search
+        $results = @(Search-ArchivedItems -Archives $db.archives -SearchTerm $Search)
         if ($results.Count -eq 0) {
             Write-Host "No items found matching: $Search" -ForegroundColor Yellow
             return

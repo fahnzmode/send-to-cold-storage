@@ -161,7 +161,8 @@ function Get-ResticSnapshots {
         throw "Failed to list snapshots: $output"
     }
 
-    return $output | ConvertFrom-Json
+    $result = $output | ConvertFrom-Json
+    return @($result | Where-Object { $_ })
 }
 
 function Test-DatabaseConsistency {
@@ -175,10 +176,10 @@ function Test-DatabaseConsistency {
     )
 
     $issues = @()
-    $snapshotIds = $Snapshots | ForEach-Object { $_.short_id, $_.id } | Where-Object { $_ }
+    $snapshotIds = @($Snapshots | Where-Object { $_ } | ForEach-Object { $_.short_id, $_.id } | Where-Object { $_ })
 
     # Check each archived item has a valid snapshot
-    $archivedItems = $Database.archives | Where-Object { $_.status -in @("archived", "archived_and_deleted") }
+    $archivedItems = @($Database.archives | Where-Object { $_.status -in @("archived", "archived_and_deleted") })
 
     foreach ($item in $archivedItems) {
         if (-not $item.restic_snapshot_id) {
@@ -253,9 +254,9 @@ function Show-VerificationReport {
     if ($DbIssues -ne $null) {
         Write-Host "--- Database Consistency ---" -ForegroundColor Yellow
 
-        $errors = $DbIssues | Where-Object { $_.Type -eq "ERROR" }
-        $warnings = $DbIssues | Where-Object { $_.Type -eq "WARN" }
-        $info = $DbIssues | Where-Object { $_.Type -eq "INFO" }
+        $errors = @($DbIssues | Where-Object { $_.Type -eq "ERROR" })
+        $warnings = @($DbIssues | Where-Object { $_.Type -eq "WARN" })
+        $info = @($DbIssues | Where-Object { $_.Type -eq "INFO" })
 
         if ($errors.Count -eq 0 -and $warnings.Count -eq 0) {
             Write-Host "Status: PASSED" -ForegroundColor Green
@@ -303,7 +304,7 @@ function Show-VerificationReport {
     Write-Host "--- Overall Status ---" -ForegroundColor Yellow
     $overallPassed = $RepoCheck.Success
     if ($DbIssues -ne $null) {
-        $errorCount = ($DbIssues | Where-Object { $_.Type -eq "ERROR" }).Count
+        $errorCount = @($DbIssues | Where-Object { $_.Type -eq "ERROR" }).Count
         $overallPassed = $overallPassed -and ($errorCount -eq 0)
     }
 
@@ -357,7 +358,7 @@ function Main {
     # Get snapshots
     $snapshots = @()
     try {
-        $snapshots = Get-ResticSnapshots
+        $snapshots = @(Get-ResticSnapshots)
     } catch {
         Write-Host "Warning: Could not list snapshots: $_" -ForegroundColor Yellow
     }
