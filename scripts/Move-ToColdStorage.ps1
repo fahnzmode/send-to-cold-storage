@@ -322,7 +322,7 @@ function Get-ItemDetails {
             IsFile = $true
         }
     } else {
-        $items = Get-ChildItem $Path -Recurse -File -ErrorAction SilentlyContinue
+        $items = @(Get-ChildItem $Path -Recurse -File -ErrorAction SilentlyContinue)
         $totalSize = ($items | Measure-Object -Property Length -Sum).Sum
         return @{
             SizeBytes = if ($totalSize) { $totalSize } else { 0 }
