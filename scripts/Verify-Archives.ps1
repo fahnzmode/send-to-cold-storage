@@ -121,11 +121,7 @@ function Get-TrackingDatabase {
 
 function Get-KnownStagingRoots {
     param($Config)
-
-    $roots = @()
-    if ($Config.staging_roots) { $roots += $Config.staging_roots }
-    if ($Config.staging_root -and $Config.staging_root -notin $roots) { $roots += $Config.staging_root }
-    return $roots
+    return @($Config.staging_roots)
 }
 
 function Get-AllTrackingDatabases {

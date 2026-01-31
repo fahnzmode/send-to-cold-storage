@@ -151,19 +151,7 @@ function Get-KnownStagingRoots {
     #>
     param($Config)
 
-    $roots = @()
-
-    # Check for staging_roots array in config (new format)
-    if ($Config.staging_roots) {
-        $roots += $Config.staging_roots
-    }
-
-    # Also check legacy single staging_root for backwards compatibility
-    if ($Config.staging_root -and $Config.staging_root -notin $roots) {
-        $roots += $Config.staging_root
-    }
-
-    return $roots
+    return @($Config.staging_roots)
 }
 
 function Get-AccessibleStagingRoots {
