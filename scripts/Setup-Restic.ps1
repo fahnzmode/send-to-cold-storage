@@ -155,7 +155,7 @@ function Install-ResticWindows {
             $resticExe = $null
             foreach ($searchPath in $searchPaths) {
                 if (Test-Path $searchPath) {
-                    $found = Get-ChildItem -Path $searchPath -Recurse -Filter "restic.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+                    $found = Get-ChildItem -Path $searchPath -Recurse -Filter "restic*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
                     if ($found) {
                         $resticExe = $found.FullName
                         break

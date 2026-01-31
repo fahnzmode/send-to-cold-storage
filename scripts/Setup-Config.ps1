@@ -2,9 +2,29 @@
 .SYNOPSIS
     Non-interactive setup script for cold storage configuration.
 .DESCRIPTION
-    Creates config files and directories using pre-known values.
-    Used for autonomous testing where interactive prompts aren't possible.
+    Creates config files and directories. Pass bucket and region as parameters.
+    Used for autonomous setup where interactive prompts aren't possible.
+.PARAMETER Bucket
+    S3 bucket name for cold storage archive.
+.PARAMETER Region
+    AWS region where the bucket is located.
+.PARAMETER AwsProfile
+    AWS profile name to use. Defaults to 'cold-storage'.
+.EXAMPLE
+    .\Setup-Config.ps1 -Bucket "my-cold-storage-bucket" -Region "us-east-1"
 #>
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$Bucket,
+
+    [Parameter(Mandatory = $true)]
+    [string]$Region,
+
+    [Parameter()]
+    [string]$AwsProfile = "cold-storage"
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -36,10 +56,7 @@ $configPath = Join-Path $configDir 'config.json'
 $passwordFile = Join-Path $configDir '.restic-password'
 $logDir = Join-Path $configDir 'logs'
 $stagingRoot = 'C:\ColdStorageStaging'
-$bucket = 'fahnzmode-cold-storage-archive'
-$region = 'us-east-2'
-$awsProfile = 'cold-storage'
-$resticRepo = "s3:s3.$region.amazonaws.com/$bucket"
+$resticRepo = "s3:s3.$Region.amazonaws.com/$Bucket"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
@@ -79,9 +96,9 @@ Write-Host "Creating config.json..."
 $config = @{
     version = '1.0'
     created = (Get-Date).ToString('o')
-    aws_profile = $awsProfile
-    aws_region = $region
-    s3_bucket = $bucket
+    aws_profile = $AwsProfile
+    aws_region = $Region
+    s3_bucket = $Bucket
     restic_repository = $resticRepo
     restic_password_file = $passwordFile
     restic_executable = $resticExe
@@ -118,7 +135,7 @@ Write-Host ""
 Write-Host "Initializing restic repository..."
 Write-Host "  Repository: $resticRepo"
 
-$env:AWS_PROFILE = $awsProfile
+$env:AWS_PROFILE = $AwsProfile
 $env:RESTIC_REPOSITORY = $resticRepo
 $env:RESTIC_PASSWORD_FILE = $passwordFile
 
