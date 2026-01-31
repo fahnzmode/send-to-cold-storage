@@ -34,6 +34,8 @@
 | winget installs restic as `restic_0.18.1_windows_amd64.exe` | Search for `restic*.exe` pattern |
 | Interactive scripts hang in non-interactive contexts | Created `Setup-Config.ps1` with mandatory params |
 | PowerShell array/null handling edge cases | Wrap with `@()` and add null checks |
+| `.Count` property errors on null/single objects | `Where-Object` and `ConvertFrom-Json` can return null or unwrapped single objects; always wrap with `@()` |
+| Tracking DB out of sync after S3 reset | Manual cleanup needed; tracking DB is local-only |
 
 ## Resources
 - Restic docs: https://restic.readthedocs.io/

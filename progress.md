@@ -137,6 +137,16 @@
   - Added multi-PC setup instructions to README
   - Added automation ideas to README
 
+### Desktop Shortcuts & Bug Fixes
+- **Status:** completed
+- Actions taken:
+  - Created `Create-Shortcuts.ps1` to generate desktop shortcuts with `-NoExit`
+  - Shortcuts created: Archive, Statistics, Verify, List Snapshots
+  - Fixed PowerShell array/null handling bugs in Archive-Staged.ps1, Verify-Archives.ps1, Restore-FromColdStorage.ps1
+  - Synced all scripts from repo to `C:\Scripts\ColdStorage\`
+  - Reset tracking database after S3 bucket was reinitialized
+  - All shortcuts now working correctly
+
 ## Project Status: COMPLETE
 
 The cold storage archival system is fully implemented and tested. All scripts are on the `main` branch and ready for use.

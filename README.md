@@ -22,13 +22,15 @@ This system supplements existing Backblaze backup by providing selective cold ar
 
 | Script | Purpose |
 |--------|---------|
-| `Setup-Restic.ps1` | Initial setup - install restic, configure AWS, initialize repository |
+| `Setup-Restic.ps1` | Interactive setup - install restic, configure AWS, initialize repository |
+| `Setup-Config.ps1` | Non-interactive setup (for automation/multi-PC) |
 | `Move-ToColdStorage.ps1` | Stage files for archival (context menu integration) |
 | `Archive-Staged.ps1` | Backup staged files to S3 Glacier Deep Archive |
 | `Query-ColdStorage.ps1` | Search and browse archived items |
 | `Restore-FromColdStorage.ps1` | Restore files from Glacier |
 | `Verify-Archives.ps1` | Periodic integrity verification |
 | `Install-ContextMenu.ps1` | Install Windows right-click context menu |
+| `Create-Shortcuts.ps1` | Create desktop shortcuts for common operations |
 
 ## Quick Start
 
