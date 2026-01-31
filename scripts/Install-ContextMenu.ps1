@@ -95,7 +95,7 @@ function Install-ContextMenuEntries {
         }
 
         # Set display name and icon
-        Set-ItemProperty -Path $reg.Path -Name "(Default)" -Value "Move to Cold Storage Staging"
+        Set-ItemProperty -Path $reg.Path -Name "(Default)" -Value "Send to Cold Storage"
         Set-ItemProperty -Path $reg.Path -Name "Icon" -Value "shell32.dll,145"  # Archive icon
 
         # Create command subkey
@@ -158,7 +158,7 @@ Windows Registry Editor Version 5.00
 
 ; Context menu for files
 [HKEY_CLASSES_ROOT\*\shell\ColdStorageStaging]
-@="Move to Cold Storage Staging"
+@="Send to Cold Storage"
 "Icon"="shell32.dll,145"
 
 [HKEY_CLASSES_ROOT\*\shell\ColdStorageStaging\command]
@@ -166,7 +166,7 @@ Windows Registry Editor Version 5.00
 
 ; Context menu for folders
 [HKEY_CLASSES_ROOT\Directory\shell\ColdStorageStaging]
-@="Move to Cold Storage Staging"
+@="Send to Cold Storage"
 "Icon"="shell32.dll,145"
 
 [HKEY_CLASSES_ROOT\Directory\shell\ColdStorageStaging\command]
@@ -174,7 +174,7 @@ Windows Registry Editor Version 5.00
 
 ; Context menu for folder background
 [HKEY_CLASSES_ROOT\Directory\Background\shell\ColdStorageStaging]
-@="Move to Cold Storage Staging"
+@="Send to Cold Storage"
 "Icon"="shell32.dll,145"
 
 [HKEY_CLASSES_ROOT\Directory\Background\shell\ColdStorageStaging\command]
