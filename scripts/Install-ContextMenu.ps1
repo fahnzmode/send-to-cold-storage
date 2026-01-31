@@ -32,7 +32,7 @@
 [CmdletBinding()]
 param(
     [Parameter()]
-    [string]$ScriptPath = "C:\Scripts",
+    [string]$ScriptPath = "C:\Scripts\ColdStorage",
 
     [Parameter()]
     [switch]$Uninstall
