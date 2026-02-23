@@ -288,6 +288,32 @@ function Show-Statistics {
         Write-Host "Last archive date: $($stats.last_archive_date)"
     }
     Write-Host ""
+
+    # Retrieval eligibility summary
+    $archivedItems = @($archives | Where-Object { $_.archived_date })
+    if ($archivedItems.Count -gt 0) {
+        $now = Get-Date
+        $safeCount = @($archivedItems | Where-Object { ([datetime]::Parse($_.archived_date)).AddDays(180) -le $now }).Count
+        $lockedCount = $archivedItems.Count - $safeCount
+        $nextEligible = $archivedItems |
+            Where-Object { ([datetime]::Parse($_.archived_date)).AddDays(180) -gt $now } |
+            Sort-Object { [datetime]::Parse($_.archived_date) } |
+            Select-Object -First 1
+
+        Write-Host "--- Retrieval Eligibility (180-day rule) ---" -ForegroundColor Yellow
+        if ($safeCount -gt 0) {
+            Write-Host "  Safe to retrieve: $safeCount item(s)" -ForegroundColor Green
+        }
+        if ($lockedCount -gt 0) {
+            Write-Host "  Early retrieval fee applies: $lockedCount item(s)" -ForegroundColor Red
+            if ($nextEligible) {
+                $safeDate = ([datetime]::Parse($nextEligible.archived_date)).AddDays(180)
+                $daysLeft = [math]::Ceiling(($safeDate - $now).TotalDays)
+                Write-Host "  Next eligible: $($safeDate.ToString('yyyy-MM-dd')) ($daysLeft days)"
+            }
+        }
+        Write-Host ""
+    }
 }
 
 function Search-Archives {
@@ -379,7 +405,18 @@ function Show-Results {
         Write-Host "    Size: $(Format-FileSize $item.size_bytes), Files: $($item.file_count)"
 
         if ($item.archived_date) {
-            Write-Host "    Archived: $($item.archived_date)"
+            $archivedDate = [datetime]::Parse($item.archived_date)
+            $daysStored = [math]::Floor(((Get-Date) - $archivedDate).TotalDays)
+            $safeDate = $archivedDate.AddDays(180)
+            $daysRemaining = [math]::Ceiling(($safeDate - (Get-Date)).TotalDays)
+
+            Write-Host "    Archived: $($archivedDate.ToString('yyyy-MM-dd')) ($daysStored days ago)"
+
+            if ($daysRemaining -gt 0) {
+                Write-Host "    Retrieval: Safe after $($safeDate.ToString('yyyy-MM-dd')) ($daysRemaining days)" -ForegroundColor Yellow
+            } else {
+                Write-Host "    Retrieval: Safe to retrieve (>180 days)" -ForegroundColor Green
+            }
         } else {
             Write-Host "    Staged: $($item.staged_date)"
         }
